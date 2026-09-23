@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { Pool } = require("pg");
+const { neon } = require("@neondatabase/serverless");
 require("dotenv").config();
 
 const app = express();
@@ -8,9 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
+const sql = neon(process.env.DATABASE_URL);
 
 app.get("/", (req, res) => {
     res.json({
@@ -20,13 +18,16 @@ app.get("/", (req, res) => {
 
 app.get("/api/links", async (req, res) => {
     try {
-        const result = await pool.query(
-            "SELECT * FROM links ORDER BY created_at DESC"
-        );
+        const links = await sql`
+            SELECT *
+            FROM links
+            ORDER BY created_at DESC
+        `;
 
-        res.json(result.rows);
+        res.json(links);
     } catch (error) {
         console.error(error);
+
         res.status(500).json({
             error: "Server error",
         });
@@ -37,20 +38,20 @@ app.post("/api/links", async (req, res) => {
     try {
         const { title, url } = req.body;
 
-        const result = await pool.query(
-            "INSERT INTO links (title, url) VALUES ($1, $2) RETURNING *",
-            [title, url]
-        );
+        const links = await sql`
+            INSERT INTO links (title, url)
+            VALUES (${title}, ${url})
+            RETURNING *
+        `;
 
-        res.status(201).json(result.rows[0]);
+        res.status(201).json(links[0]);
     } catch (error) {
         console.error(error);
+
         res.status(500).json({
             error: "Server error",
         });
     }
 });
 
-app.listen(3000, () => {
-    console.log("Server running on http://localhost:3000");
-});
+module.exports = app;
