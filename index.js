@@ -24,21 +24,9 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/links", async (req, res) => {
-    try {
-        const links = await sql`
-            SELECT *
-            FROM links
-            ORDER BY created_at DESC
-        `;
-
-        res.json(links);
-    } catch (error) {
-        console.error(error);
-
-        res.status(500).json({
-            error: "Server error",
-        });
-    }
+    res.json({
+        message: "Link Saver API is running",
+    });
 });
 
 app.post("/api/links", async (req, res) => {
